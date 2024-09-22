@@ -1,0 +1,10 @@
+---
+triple:          'arm64-apple-darwin'
+binary-path:     autograder
+relocations:
+  - { offsetInCU: 0x26, offset: 0x26, size: 0x8, addend: 0x0, symName: _write_filepath_to_submissions, symObjAddr: 0x0, symBinAddr: 0x100003C30, symSize: 0x1AC }
+  - { offsetInCU: 0x4D, offset: 0x4D, size: 0x8, addend: 0x0, symName: _os, symBinAddr: 0x100008000, symSize: 0x0 }
+  - { offsetInCU: 0xBA, offset: 0xBA, size: 0x8, addend: 0x0, symName: _write_filepath_to_submissions, symObjAddr: 0x0, symBinAddr: 0x100003C30, symSize: 0x1AC }
+  - { offsetInCU: 0x126, offset: 0x126, size: 0x8, addend: 0x0, symName: _print_status, symObjAddr: 0x1AC, symBinAddr: 0x100003DDC, symSize: 0x4 }
+  - { offsetInCU: 0x13B, offset: 0x13B, size: 0x8, addend: 0x0, symName: _main, symObjAddr: 0x1B0, symBinAddr: 0x100003DE0, symSize: 0x94 }
+...

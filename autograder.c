@@ -1,7 +1,6 @@
 #include "include/utility.h"
-//TEST FOR CORRECT BRANCH
-void print_status(){
 
+void print_status(){
      //TODO: write the status of each executable file to autograder.out. Your output should align with expected.out 
 }
 
@@ -23,6 +22,7 @@ int main(int argc, char *argv[]) {
 
 
     //TODO: read the executable filename from submissions.txt
+    
 
 
     //TODO: For each parameter, run all executables in batch size chunks
