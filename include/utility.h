@@ -28,7 +28,7 @@ typedef struct {
     char name[MAX_EXE][PATH_MAX];  // Array of string for each program's name
     int status[MAX_EXE][MAX_PI];   // For each program, an array of status codes
     int pi[MAX_EXE][MAX_PI];       // Array of 'pi' values, assuming one 'pi' per program for simplicity
-
+    int executable_count;
 } out_status;
 
 out_status os;
@@ -74,6 +74,9 @@ void write_filepath_to_struct(const char *directoryPath) {
         // Increment
         i++;
     }
+
+    // Set executable count
+    os.executable_count = i;
 
     closedir(dir);
 }
