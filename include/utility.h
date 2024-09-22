@@ -13,6 +13,7 @@
 #include <sys/time.h>
 #include <time.h>
 #include <limits.h> // For PATH_MAX
+#include <errno.h>
 
 // Define the maximum number of executable files and the maximum number of pi.
 
