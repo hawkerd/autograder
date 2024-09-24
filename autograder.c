@@ -96,15 +96,12 @@ int main(int argc, char *argv[]) {
                     perror("Failed to fork");
                     exit(EXIT_FAILURE); 
                 } else if (children[b] == 0) {
-                    // Construct command line arguments
-                    char* args[] = {os.paths[current_executable], argv[p + 2], NULL};
-
                     // Exec the proper executable
-                    if (execve(os.paths[current_executable], args, NULL) == -1) {
-                        // Handle error
-                        perror("Failed to exec with error"); //todo: check errno
-                        exit(EXIT_FAILURE);
-                    }
+                    execl(os.paths[current_executable], os.name[current_executable], argv[p + 2], NULL);
+
+                    // Handle exec() error
+                    perror("Failed to exec with error"); //todo: check errno
+                    exit(EXIT_FAILURE);
                 }
             }
 
@@ -135,7 +132,7 @@ int main(int argc, char *argv[]) {
                     // Assign exit status of the current executable to os struct
                     if (!(WIFEXITED(exit_status))) {
                         os.status[current_executable][p] = CRASH;
-                    } else if (exit_status == 0) {
+                    } else if (WEXITSTATUS(exit_status) == 0) {
                         os.status[current_executable][p] = CORRECT;
                     } else {
                         os.status[current_executable][p] = INCORRECT;
