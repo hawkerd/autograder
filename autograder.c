@@ -69,27 +69,38 @@ int main(int argc, char *argv[]) {
     // Write the file paths/ names from the "solutions" directory into the struct
     write_filepath_to_struct("solutions");
 
+
+    int done_executables;
+    int executable_count;
     //TODO: For each parameter, run all executables in batch size chunks
     for (int p = 0; p < params; p++) {
-        int done_executables = 0;
+        //printf("\nNEXT PARAMATER\n");
+        done_executables = 0;
         pid_t children[batch_size];
-        while (done_executables < os.executable_count) {
+        executable_count = os.executable_count;
+        while (done_executables < executable_count) {
             for (int b = 0; b < batch_size; b++) {
                 // Determine current executable based on done executables and index within the batch
                 int current_executable = done_executables + b;
-                if (current_executable >= os.executable_count) {
+                if (current_executable >= executable_count) {
+                    
+                    //printf("breaking out because %i >= %i\n", current_executable, executable_count);
+                    //print_struct(4);
+
                     break;
                 }
 
                 // Fork
+               // printf("creating child\n");
                 children[b] = fork();
-
                 if (children[b] == -1) {
                     perror("Failed to fork");
                     exit(EXIT_FAILURE); 
                 } else if (children[b] == 0) {
                     char input[128];
-                    snprintf(input, sizeof(input), "%d", os.pi[current_executable][p]);
+                    // printf("pi to be printed to the file %i\n", os.pi[current_executable][p]);
+                    // printf("currentexecutabel: %i\n", current_executable);
+                    snprintf(input, sizeof(input), "%i", os.pi[current_executable][p]);
                     char* args[] = {os.paths[current_executable], input, NULL};
                     if (execve(os.paths[current_executable], args, NULL) == -1) {
                         perror("Failed to exec with error"); //todo: check errno
@@ -105,27 +116,44 @@ int main(int argc, char *argv[]) {
 
                     // Variable to hold child exit status
                     int exit_status;
+                    pid_t wait_return_value;
 
-                    // Wait for the process, and store the result
-                    waitpid(children[b], &exit_status, 0); // todo: use WNOHANG once implementing blocks
-
-                    if (!(WIFEXITED(exit_status))) {
-                        os.status[current_executable][p] = CRASH;
-                    } else if (exit_status == 0) {
-                        os.status[current_executable][p] = CORRECT;
-                    } else {
-                        os.status[current_executable][p] = INCORRECT;
+                
+                    wait_return_value = waitpid(children[b], &exit_status, WNOHANG) ; // todo: use WNOHANG once implementing blocks
+                    while (wait_return_value == 0) {
+                        //printf("Child still running, sleeping for 1 mili second\n");
+                        sleep(1);
+                        wait_return_value = waitpid(children[b], &exit_status, WNOHANG) ; // todo: use WNOHANG once implementing blocks
                     }
-
-                    finished++;
+                    if(wait_return_value == -1){
+                        if (errno == 10){
+                            printf("Wait failed. child doesnt exist\n");
+                        } else {
+                            printf("Wait failed with code%i\n", errno);
+                        }
+                    }else{
+                    
+                        if (!(WIFEXITED(exit_status))) {
+                            os.status[current_executable][p] = CRASH;
+                        } else if (exit_status == 0) {
+                            os.status[current_executable][p] = CORRECT;
+                        } else {
+                            os.status[current_executable][p] = INCORRECT;
+                        }
+                    }
+                    finished = finished + 1;
                 }
             }
             done_executables += batch_size;
         }
 
     }
+    //print_struct(4);
     // Write the status of each executable into autograder.out
     print_status(params);    
 
     return 0;
 }     
+
+
+
