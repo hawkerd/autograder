@@ -6,7 +6,7 @@ thors648, hawke069, lopat018
 <br/><br/>
 
 ## Compilation
-To compile this program, run gcc on autograder.c. Then, run the executable with parameters: <batch size>, <p1>, <p2>, ... <pn>
+To compile this program, run gcc on autograder.c. Then, run the executable with batch size and program parameters.
 
 	$ gcc autograder.c
 	$ ./a.out <batch size>, <p1>, <p2>, ... <pn>
