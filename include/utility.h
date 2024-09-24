@@ -13,6 +13,7 @@
 #include <sys/time.h>
 #include <time.h>
 #include <limits.h> // For PATH_MAX
+#include <errno.h>
 
 // Define the maximum number of executable files and the maximum number of pi.
 
@@ -24,8 +25,9 @@
 // Structure to store information for each executable file: path, status, and pi.
 typedef struct {
     char paths[MAX_EXE][PATH_MAX]; // Array of strings for each program's path
+    char name[MAX_EXE][PATH_MAX];  // Array of string for each program's name
     int status[MAX_EXE][MAX_PI];   // For each program, an array of status codes
-    int pi[MAX_EXE][MAX_PI];       // Array of 'pi' values, assuming one 'pi' per program for simplicity
+    int executable_count;
 } out_status;
 
 out_status os;
@@ -40,19 +42,13 @@ enum {
 
 
 /**
- * Writes the full paths of all files within a specified directory to a given output file.
- * This function opens the specified directory, iterates over each entry excluding special
- * entries "." and "..", constructs the full path for each file, and writes these paths to
- * the specified output file.
- * @param directoryPath The path to the directory whose file paths are to be written.
- * @param outputFileName The path to the file where the full paths will be saved.
- * @Hint: This function can create submissions.txt if you wish to use it
+ * Writes the full paths and names of all files within a specified directory to the os struct.
+ * @param directoryPath The path to the directory whose file paths/names are to be written.
  */
 
-void write_filepath_to_submissions(const char *directoryPath, const char *outputFileName) {
+void write_filepath_to_struct(const char *directoryPath) {
     DIR *dir;
     struct dirent *entry;
-    FILE *file;
 
     // Open the directory
     dir = opendir(directoryPath);
@@ -61,29 +57,26 @@ void write_filepath_to_submissions(const char *directoryPath, const char *output
         exit(EXIT_FAILURE);
     }
 
-    // Open or create the output file
-    file = fopen(outputFileName, "w");
-    if (!file) {
-        perror("Failed to open output file");
-        closedir(dir);
-        exit(EXIT_FAILURE);
-    }
-
     char fullPath[PATH_MAX];
+
+    int i = 0;
     while ((entry = readdir(dir)) != NULL) {
         // Skip "." and ".." directories
         if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0) {
             continue;
         }
 
-        // Construct the full path
-        snprintf(fullPath, sizeof(fullPath), "%s/%s", directoryPath, entry->d_name);
+        // Save submission name and path into struct
+        strcpy(os.name[i], entry->d_name);
+        snprintf(os.paths[i], sizeof(fullPath), "%s/%s", directoryPath, entry->d_name);
 
-        // Write the full path to the file
-        fprintf(file, "%s\n", fullPath);
+        // Increment
+        i++;
     }
 
-    fclose(file);
+    // Set executable count
+    os.executable_count = i;
+
     closedir(dir);
 }
 
