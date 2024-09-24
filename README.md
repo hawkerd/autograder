@@ -2,7 +2,7 @@
 
 Samuel Thorson, Daniel Hawker, Luke Lopata
 
-thors648, lopat018, hawke069
+thors648, hawke069, lopat018
 <br/><br/>
 
 ## Compilation
