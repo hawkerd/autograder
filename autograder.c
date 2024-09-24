@@ -1,6 +1,6 @@
 #include "include/utility.h"
 
-void print_status(int params) {
+void print_status(int params, char *argv[]) {
     // Open autograder.out
     FILE* outputFile = fopen("autograder.out", "w");
     if (!outputFile) {
@@ -18,10 +18,10 @@ void print_status(int params) {
         // Print executable name, parameter, and result
         fprintf(outputFile, "%s ", os.name[i]);
 
-        for (int j = 0; j < params; j++) {
-            fprintf(outputFile, "%i", os.pi[i][j]);
+        for (int p = 0; p < params; p++) {
+            fprintf(outputFile, "%s", argv[p + 2]);
 
-            switch (os.status[i][j]) {
+            switch (os.status[i][p]) {
                 case INCORRECT:
                     fprintf(outputFile, "(incorrect) ");
                     break;
@@ -43,73 +43,115 @@ void print_status(int params) {
 
 
 int main(int argc, char *argv[]) {
-    // Ensure proper program usage
+    int batch_size; // Batch size
+    int params; // Number of inputted parameters
+    int done_executables; // Used to track index of completed executables (previous batches)
+    int current_executable; // Used to index executables within each batch
+    int exit_status; // Used to hold the exit status of executables
+    pid_t wait_return_value; // Wait return value
+
+
+    // If argument count is less than two, output proper program usage
     if (argc < 2) {
         printf("Usage: %s <batch> <p1> <p2> ... <pn>\n", argv[0]);
         return 1;
     }
 
-    // Convert the first command-line argument to an integer to determine the batch size
-    int batch_size = atoi(argv[1]);
+    // Convert the second command-line argument to an integer to determine the batch size
+    batch_size = atoi(argv[1]);
 
-    // Ensure proper program usage
-    const int params = argc - 2;
+    // If the number of inputted parameters exceed the max, output max number of params
+    params = argc - 2;
     if (params > MAX_PI) {
         printf("Maximum number of params: %i\n", MAX_PI);
         return 1;
     }
 
-    // Initialize struct with contents of argv
-    for (int i = 0; i < MAX_EXE; i++) {
-        for (int j = 0; j < params; j++) {
-            os.pi[i][j] = atoi(argv[j + 2]);
-        }
-    }
-
     // Write the file paths/ names from the "solutions" directory into the struct
     write_filepath_to_struct("solutions");
 
-    //TODO: For each parameter, run all executables in batch size chunks
-    for (int j = 0; j < params; j++) {
-        for (int i = 0; i < MAX_EXE; i++) {
-            // Break
-            if (!(os.paths[i])) {
-                break;
+    //For each parameter, run all executables in batch size chunks
+    for (int p = 0; p < params; p++) {
+        // Reset done executable count
+        done_executables = 0;
+
+        // Variable to hold the process id of executables
+        pid_t children[batch_size];
+
+        // Iterate through all executables
+        while (done_executables < os.executable_count) {
+            // Iterate through the batch
+            for (int b = 0; b < batch_size; b++) {
+                // Determine current executable based on done executables and index within the batch
+                current_executable = done_executables + b;
+                if (current_executable >= os.executable_count) {
+                    break;
+                }
+
+                // Fork
+                children[b] = fork();
+
+                if (children[b] == -1) {
+                    // Handle error
+                    perror("Failed to fork");
+                    exit(EXIT_FAILURE); 
+                } else if (children[b] == 0) {
+                    // Construct command line arguments
+                    char* args[] = {os.paths[current_executable], argv[p + 2], NULL};
+
+                    // Exec the proper executable
+                    if (execve(os.paths[current_executable], args, NULL) == -1) {
+                        // Handle error
+                        perror("Failed to exec with error"); //todo: check errno
+                        exit(EXIT_FAILURE);
+                    }
+                }
             }
 
-            // Execute the submission
-            pid_t pid = fork();
-            if (pid == -1) {
-                perror("Failed to fork");
-                exit(EXIT_FAILURE);
-            } else if (pid == 0) {
-                char input[128];
-                snprintf(input, sizeof(input), "%d", os.pi[i][j]);
-                char* args[] = {os.paths[i], input, NULL};
-                if (execve(os.paths[i], args, NULL) == -1) {
-                    perror("Failed to exec with error"); //todo: check errno
+            // Iterate through the batch
+            for (int b = 0; b < batch_size; b++) {
+                // Determine current executable based on done executables and index within the batch
+                current_executable = done_executables + b;
+                if (current_executable >= os.executable_count) {
+                    break;
+                }
+            
+                // Wait for the proper child process
+                wait_return_value = waitpid(children[b], &exit_status, WNOHANG);
+                while (wait_return_value == 0) {
+                    // Sleep for 0.05s
+                    sleep(0.05);
+
+                    // Continuously check to see if the process returned
+                    wait_return_value = waitpid(children[b], &exit_status, WNOHANG);
+                }
+                if (wait_return_value == -1) {
+                    // Handle wait error
+                    char error[128];
+                    sprintf(error, "Wait failed with code %i\n", errno);
+                    perror(error);
                     exit(EXIT_FAILURE);
-                }
-            } else {
-                // Variable to hold child exit status
-                int exit_status;
-
-                // Wait for the process, and store the result
-                waitpid(pid, &exit_status, 0); // todo: use WNOHANG once implementing blocks
-
-                if (!(WIFEXITED(exit_status))) {
-                    os.status[i][j] = CRASH;
-                } else if (exit_status == 0) {
-                    os.status[i][j] = CORRECT;
                 } else {
-                    os.status[i][j] = INCORRECT;
+                    // Assign exit status of the current executable to os struct
+                    if (!(WIFEXITED(exit_status))) {
+                        os.status[current_executable][p] = CRASH;
+                    } else if (exit_status == 0) {
+                        os.status[current_executable][p] = CORRECT;
+                    } else {
+                        os.status[current_executable][p] = INCORRECT;
+                    }
                 }
             }
+            done_executables += batch_size;
         }
+
     }
 
     // Write the status of each executable into autograder.out
-    print_status(params);    
+    print_status(params, argv);    
 
     return 0;
 }     
+
+
+
