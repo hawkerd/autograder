@@ -10,11 +10,6 @@ void print_status(int params, char *argv[]) {
 
     // Write output to autograder.out
     for (int i = 0; i < MAX_EXE; i++) {
-        // Break
-        if (!(os.paths[i])) {
-            break;
-        }
-
         // Print executable name, parameter, and result
         fprintf(outputFile, "%s ", os.name[i]);
 
