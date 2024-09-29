@@ -16,10 +16,11 @@
 #include <errno.h>
 
 // Define the maximum number of executable files and the maximum number of pi.
-
 #define MAX_EXE 20
 #define MAX_PI 4 
 
+// Define the buffer size, used for printing lines in print_status()
+#define BUFFER_SIZE 1024
 
 
 // Structure to store information for each executable file: path, status, and pi.

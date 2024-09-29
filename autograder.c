@@ -1,39 +1,54 @@
 #include "include/utility.h"
 
 void print_status(int params, char *argv[]) {
-    // Open autograder.out
+    // Open autograder.out, error check the syscall
     FILE* outputFile = fopen("autograder.out", "w");
     if (!outputFile) {
         perror("Failed to open/create output file");
         exit(EXIT_FAILURE);
     }
 
-    // Write output to autograder.out
+    // Initialize space to build the string
+    char buffer[BUFFER_SIZE]; // Space to build the string
+    int offset; // Holds the offset within the buffer
+
+    // Create the output string
     for (int i = 0; i < MAX_EXE; i++) {
-        // Print executable name, parameter, and result
-        fprintf(outputFile, "%s ", os.name[i]);
+        // Append executable name
+        offset = snprintf(buffer, BUFFER_SIZE, "%s ", os.name[i]);
 
         for (int p = 0; p < params; p++) {
-            fprintf(outputFile, "%s", argv[p + 2]);
+            // Append argument
+            offset += snprintf(buffer + offset, BUFFER_SIZE - offset, "%s", argv[p + 2]);
 
+            // Append result
             switch (os.status[i][p]) {
                 case INCORRECT:
-                    fprintf(outputFile, "(incorrect) ");
+                    offset += snprintf(buffer + offset, BUFFER_SIZE - offset, "(incorrect) ");
                     break;
                 case CORRECT:
-                    fprintf(outputFile, "(correct) ");
+                    offset += snprintf(buffer + offset, BUFFER_SIZE - offset, "(correct) ");
                     break;
                 case CRASH:
-                    fprintf(outputFile, "(crash) ");
+                    offset += snprintf(buffer + offset, BUFFER_SIZE - offset, "(crash) ");
                     break;
             }
         }
 
-        fprintf(outputFile, "\n");
+        offset += snprintf(buffer + offset, BUFFER_SIZE, "\n");
+
+        // Write line to autograder.out
+        if (fputs(buffer, outputFile) == EOF) {
+            perror("Failed to write to output file");
+            exit(EXIT_FAILURE);
+        }
     }
 
     // Close autograder.out
-    fclose(outputFile);
+    if (EOF == fclose(outputFile)) {
+        perror("Failed to close output file");
+        exit(EXIT_FAILURE);
+    }
 }
 
 
@@ -48,7 +63,10 @@ int main(int argc, char *argv[]) {
 
     // If argument count is less than two, output proper program usage
     if (argc < 2) {
-        printf("Usage: %s <batch> <p1> <p2> ... <pn>\n", argv[0]);
+        if (printf("Usage: %s <batch> <p1> <p2> ... <pn>\n", argv[0]) < 0) {
+            perror("Failed to print to stdout");
+            exit(EXIT_FAILURE);
+        }
         return 1;
     }
 
@@ -58,7 +76,10 @@ int main(int argc, char *argv[]) {
     // If the number of inputted parameters exceed the max, output max number of params
     params = argc - 2;
     if (params > MAX_PI) {
-        printf("Maximum number of params: %i\n", MAX_PI);
+        if (printf("Maximum number of params: %i\n", MAX_PI) < 0) {
+            perror("Failed to print to stdout");
+            exit(EXIT_FAILURE);
+        }
         return 1;
     }
 
@@ -95,7 +116,7 @@ int main(int argc, char *argv[]) {
                     execl(os.paths[current_executable], os.name[current_executable], argv[p + 2], NULL);
 
                     // Handle exec() error
-                    perror("Failed to exec with error"); //todo: check errno
+                    perror("Failed to exec with error");
                     exit(EXIT_FAILURE);
                 }
             }
@@ -119,9 +140,7 @@ int main(int argc, char *argv[]) {
                 }
                 if (wait_return_value == -1) {
                     // Handle wait error
-                    char error[128];
-                    sprintf(error, "Wait failed with code %i\n", errno);
-                    perror(error);
+                    perror("Failed to wait");
                     exit(EXIT_FAILURE);
                 } else {
                     // Assign exit status of the current executable to os struct
