@@ -1,7 +1,10 @@
 # Autograder
-This project implements a basic autograder that automates the testing of multiple student submissions, each representing the solution to a problem. Each executable will either pass, fail, or crash for any given integer parameter. The autograder will compile these results into autograder.out. The autograder can run executables in batches of any size, allowing for flexibility and the ability to run it more efficiently on different systems. The purpose of the project was to understand the syntax and use of different system calls relating to UNIX file i/o and processes, like the fork/ exec/ wait sequence.
+This project implements a basic autograder that automates the testing of multiple student submissions, each representing the solution to a problem. Each executable will either pass, fail, or crash for any given integer parameter. The autograder will compile these results into autograder.out. The autograder can run executables in batches of any size, allowing for flexibility and the ability to run it more efficiently on different systems.
+<br/><br/>
+The purpose of the project was to understand file i/o and process manipulation in UNIX systems. To accomplish this, system calls like `open()`, `write()`, `fork()`, `exec()`, and `wait()` were necessary.
 
 <br/>
+
 ## Compilation and Execution
 To compile, run the provided makefile. Then, run the executable with batch size and program parameters, which will be passed onto each "submission".
 ```
@@ -10,11 +13,13 @@ To compile, run the provided makefile. Then, run the executable with batch size 
 ```
 
 <br/>
+
 ## Assumptions
 - Assumes that the submissions are located in the solutions directory.
 - Assumes that all provided submissions will exit and return with a valid exit status, or crash.
 
 <br/>
+
 ## Contributions
 This project was completed for **CSCI 4061 - Introduction to Operating Systems** at the University of Minnesota by the following contributors, from **Group 5**.
 
